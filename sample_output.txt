@@ -1,0 +1,10 @@
+$ python organize.py sample_folder
+Moved archive.zip -> Archives/
+Moved notes.txt -> Documents/
+Moved photo1.jpg -> Images/
+Moved photo2.png -> Images/
+Moved report.pdf -> Documents/
+Moved script.py -> Other/
+Moved song.mp3 -> Audio/
+
+Done. 7 file(s) organized.
