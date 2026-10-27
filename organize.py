@@ -1,6 +1,6 @@
+import argparse
 import os
 import shutil
-import sys
 
 CATEGORIES = {
     "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"],
@@ -18,7 +18,23 @@ def get_category(extension):
     return "Other"
 
 
-def organize_folder(folder_path):
+def unique_destination(destination):
+    """If destination already exists, append (1), (2), etc. to the filename."""
+    if not os.path.exists(destination):
+        return destination
+
+    folder, name = os.path.split(destination)
+    stem, extension = os.path.splitext(name)
+
+    counter = 1
+    while True:
+        candidate = os.path.join(folder, f"{stem} ({counter}){extension}")
+        if not os.path.exists(candidate):
+            return candidate
+        counter += 1
+
+
+def organize_folder(folder_path, dry_run=False):
     if not os.path.isdir(folder_path):
         print(f"Folder not found: {folder_path}")
         return
@@ -34,24 +50,30 @@ def organize_folder(folder_path):
         extension = os.path.splitext(name)[1]
         category = get_category(extension)
         category_path = os.path.join(folder_path, category)
+        destination = unique_destination(os.path.join(category_path, name))
+
+        if dry_run:
+            print(f"Would move {name} -> {category}/{os.path.basename(destination)}")
+            moved_count += 1
+            continue
 
         os.makedirs(category_path, exist_ok=True)
 
-        destination = os.path.join(category_path, name)
-
         try:
             shutil.move(full_path, destination)
-            print(f"Moved {name} -> {category}/")
+            print(f"Moved {name} -> {category}/{os.path.basename(destination)}")
             moved_count += 1
         except Exception as e:
             print(f"Could not move {name}: {e}")
 
-    print(f"\nDone. {moved_count} file(s) organized.")
+    verb = "Would organize" if dry_run else "Organized"
+    print(f"\nDone. {verb} {moved_count} file(s).")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python organize.py <folder_path>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Sort files in a folder into subfolders by type.")
+    parser.add_argument("folder", help="Path to the folder to organize")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would move without moving anything")
+    args = parser.parse_args()
 
-    organize_folder(sys.argv[1])
+    organize_folder(args.folder, dry_run=args.dry_run)
